@@ -22,7 +22,7 @@ public class AwsIotPublishService {
     }
 
     public void publish(double latitude,double longitude) throws  Exception{
-        String topic ="esp32/data";
+        String topic ="esp32";
         String timestamp = Instant.now().toString();
 
         JSONObject json = new JSONObject();

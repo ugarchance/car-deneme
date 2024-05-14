@@ -20,28 +20,41 @@ public class MqttWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // Send initial message to client
+        System.out.println("WebSocket connection established.");
         session.sendMessage(new TextMessage("Connected to WebSocket"));
+        subscribeService.setWebSocketSession(session);  // Set the WebSocket session in the service
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // Parse incoming message as JSON
         JSONObject jsonMessage = new JSONObject(message.getPayload());
         String topic = jsonMessage.getString("topic");
 
-        // Subscribe to the topic and listen for MQTT messages
-        subscribeService.subscribe(topic).thenAccept(combinedMessage -> {
-            try {
-                // Send confirmation message
-                JSONObject confirmationMessage = combinedMessage.getJSONObject("confirmation");
-                session.sendMessage(new TextMessage(confirmationMessage.toString()));
+        System.out.println("Subscribing to topic: " + topic);
 
-                // Listen for MQTT messages
-                JSONObject mqttMessage = combinedMessage.getJSONObject("mqttMessage");
-                session.sendMessage(new TextMessage(mqttMessage.toString()));
+        subscribeService.subscribe(topic).thenAccept(confirmationMessage -> {
+            try {
+                session.sendMessage(new TextMessage(confirmationMessage.toString())); // Başarı mesajını gönder
+                System.out.println("Subscription successful.");
+
+                // Mesajları dinlemek için publishEvents kullanın
+                subscribeService.getMessageFuture().thenAccept(mqttMessage -> {
+                    try {
+                        if (session.isOpen()) {
+                            session.sendMessage(new TextMessage(mqttMessage.toString()));
+                            System.out.println("Received message: " + mqttMessage.toString());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
+                try {
+                    session.sendMessage(new TextMessage("Error while sending the confirmation: " + e.getMessage()));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         }).exceptionally(throwable -> {
             try {

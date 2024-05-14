@@ -12,9 +12,9 @@ import java.util.concurrent.CompletableFuture;
 @Configuration
 public class AwsIotClientConfig {
     @Bean
-    public Mqtt5Client mqtt5Client() {
+    public Mqtt5Client mqtt5Client(SampleLifeCycleEvents lifeCycleEvents,SamplePublishEvents publishEvents) {
         String endpoint = "an726pjx0w8v9-ats.iot.eu-north-1.amazonaws.com";
-        String clientId = "esp322";
+        String clientId = "ugar";
         String certPath = "C:\\Users\\Ugar\\Downloads\\DeviceCertificate.crt";
         String privateKeyPath = "C:\\Users\\Ugar\\Downloads\\PrivateKey.key";
 
@@ -22,9 +22,10 @@ public class AwsIotClientConfig {
         ConnectPacket.ConnectPacketBuilder connectProperties = new ConnectPacket.ConnectPacketBuilder();
         connectProperties.withClientId(clientId);
 
-        SampleLifeCycleEvents lifeCycleEvents = new SampleLifeCycleEvents();
-        return builder.withConnectProperties(connectProperties).
+        return builder
+                .withConnectProperties(connectProperties).
                 withLifeCycleEvents(lifeCycleEvents)
+                .withPublishEvents(publishEvents)
                 .build();
 
     }
